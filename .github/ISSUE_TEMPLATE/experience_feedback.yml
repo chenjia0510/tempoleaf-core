@@ -1,0 +1,22 @@
+name: Experience feedback
+description: Share practice feedback, confusion points, or product suggestions.
+title: "[Feedback] "
+labels: ["feedback"]
+body:
+  - type: textarea
+    id: experience
+    attributes:
+      label: How was your experience?
+      description: What felt useful, confusing, or frustrating?
+    validations:
+      required: true
+  - type: textarea
+    id: suggestions
+    attributes:
+      label: Suggestions
+      description: What would make TempoLeaf more helpful for your reading practice?
+  - type: textarea
+    id: chunking
+    attributes:
+      label: Any chunking issues?
+      description: Mention anything that felt off, even if you are not fully sure.

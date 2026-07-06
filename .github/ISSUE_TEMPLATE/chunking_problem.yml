@@ -1,0 +1,41 @@
+name: Chunking problem
+description: Report a sentence where the chunking felt unnatural or misleading.
+title: "[Chunking] "
+labels: ["chunking"]
+body:
+  - type: textarea
+    id: sentence
+    attributes:
+      label: Original sentence
+      description: Please avoid private or sensitive text.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual chunking
+      description: Paste the chunking TempoLeaf showed.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected chunking
+      description: Show how you think it should be grouped.
+    validations:
+      required: true
+  - type: dropdown
+    id: context
+    attributes:
+      label: Where did this happen?
+      options:
+        - Focus playback
+        - Mark phrase chunks
+        - Paste reader
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: "2.2.0"

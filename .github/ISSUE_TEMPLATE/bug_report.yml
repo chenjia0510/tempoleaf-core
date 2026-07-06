@@ -1,0 +1,42 @@
+name: Bug report
+description: Report a playback, overlay, dictionary, or onboarding bug.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Tell us what you expected and what actually happened.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area?
+      options:
+        - Focus playback
+        - Mark phrase chunks
+        - Paste reader
+        - Dictionary helper
+        - Onboarding / guide
+        - Popup / settings
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: "2.2.0"
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the page or text source if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshot or extra notes
+      description: Do not paste private text or personal information.

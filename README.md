@@ -52,6 +52,10 @@ Recommended topics:
 - playback or integration bugs
 - learning experience feedback
 
+## Privacy Policy
+
+The Chrome extension privacy policy is available at [privacy_policy.md](privacy_policy.md).
+
 ## Local test
 
 Requires Node.js 20 or newer.

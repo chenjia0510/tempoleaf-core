@@ -28,6 +28,10 @@
     'did', 'have', 'has', 'had'
   ]);
   const NEGATIONS = new Set(['not', "n't", 'never']);
+  const POSSESSIVES = new Set(['my', 'your', 'his', 'her', 'its', 'our', 'their']);
+  const OBJECT_COMPLEMENT_VERBS = new Set([
+    'let', 'lets', 'letting', 'make', 'makes', 'making', 'help', 'helps', 'helping'
+  ]);
   const SUBJECT_TAGS = new Set(['Noun', 'Pronoun', 'Person', 'Organization', 'Place']);
   const VERB_TAGS = new Set(['Verb', 'Auxiliary', 'Copula', 'Participle']);
   const CLAUSE_STARTERS = new Set([
@@ -43,7 +47,8 @@
     'slowing down', 'less than half of', 'more than half of', 'at least half of',
     'fewer than half of', 'less than', 'more than', 'at least',
     'read out loud', 'reads out loud', 'reading out loud', 'read aloud',
-    'reads aloud', 'reading aloud'
+    'reads aloud', 'reading aloud', 'return to', 'returns to', 'returned to',
+    'returning to'
   ];
 
   function normalizeText(text) {
@@ -144,6 +149,7 @@
       const next = cleanToken(tokens[i + 1]);
       const currentTags = tags[i] || new Set();
       const nextTags = tags[i + 1] || new Set();
+      const currentPunctuation = punctuationOf(tokens[i]);
 
       if (
         ARTICLES.has(current) ||
@@ -158,8 +164,10 @@
       if (
         (currentTags.has('Adjective') && nextTags.has('Noun')) ||
         (currentTags.has('Determiner') && (nextTags.has('Adjective') || nextTags.has('Noun'))) ||
+        ((currentTags.has('Possessive') || POSSESSIVES.has(current)) && (nextTags.has('Adjective') || nextTags.has('Noun'))) ||
         (currentTags.has('Auxiliary') && (nextTags.has('Verb') || nextTags.has('Participle'))) ||
         (
+          !currentPunctuation &&
           currentTags.has('Noun') &&
           nextTags.has('Noun') &&
           i > 0 &&
@@ -174,6 +182,16 @@
       }
 
       if (
+        OBJECT_COMPLEMENT_VERBS.has(current) &&
+        (nextTags.has('Pronoun') || nextTags.has('Noun')) &&
+        i + 2 < tokens.length &&
+        Array.from(tags[i + 2] || new Set()).some((tag) => VERB_TAGS.has(tag))
+      ) {
+        protectedBoundaries.add(i);
+      }
+
+      if (
+        !currentPunctuation &&
         Array.from(currentTags).some((tag) => SUBJECT_TAGS.has(tag)) &&
         Array.from(nextTags).some((tag) => VERB_TAGS.has(tag)) &&
         !currentTags.has('Date') &&
@@ -222,6 +240,12 @@
     let score = 0;
     if (punctuation === ';' || punctuation === ':' || punctuation === '—' || punctuation === '–') score += 70;
     else if (punctuation === ',') score += 50;
+    if (
+      punctuation === ',' &&
+      Array.from(nextTags).some((tag) => SUBJECT_TAGS.has(tag)) &&
+      Array.from(tags[end + 2] || new Set()).some((tag) => VERB_TAGS.has(tag))
+    ) score += 35;
+    if (punctuation === ',' && nextTags.has('Verb')) score += 25;
     if (CLAUSE_STARTERS.has(next)) score += 35;
     if (
       segmentLength >= 2 &&
@@ -247,6 +271,10 @@
     if (length >= limits.min && length <= limits.idealMax) score += 20;
     else if (length < limits.min) score -= (limits.min - length) * 15;
     else score -= (length - limits.idealMax) * 15;
+    for (let i = start; i < end; i += 1) {
+      const punctuation = punctuationOf(tokens[i]);
+      if (punctuation === ',' || punctuation === ';' || punctuation === ':') score -= 45;
+    }
     if (length === 1 && tokens.length > 1) score -= 60;
     if (start > 0 && CONJUNCTIONS.has(cleanToken(tokens[start])) && length === 1) score -= 80;
     return score;

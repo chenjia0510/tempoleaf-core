@@ -25,6 +25,23 @@ TempoLeaf is an English phrase-reading trainer that helps learners stop reading 
 
 Chunking means seeing collocations, phrases, and sentence patterns as meaningful units instead of processing every word separately. TempoLeaf uses this idea to help readers build phrase awareness first, then improve pace without treating comprehension as a simple speed contest.
 
+## NLP approach
+
+TempoLeaf Core uses local NLP tags and deterministic phrase rules to estimate chunk boundaries. It is designed for fast, private, repeatable chunking rather than heavy server-side analysis.
+
+Advantages:
+
+- Runs locally with low latency
+- Keeps selected text on the device during chunking
+- Produces stable, repeatable boundaries for the same input
+- Easy to test, debug, and improve with concrete regression cases
+
+Limitations:
+
+- It is not a large language model and does not deeply reason over full discourse context
+- Unusual syntax, ambiguous phrasing, names, citations, or noisy webpage text can still lead to awkward chunk boundaries
+- Some tradeoffs favor readable phrase grouping over full linguistic accuracy
+
 ## Feedback
 
 If you want to report chunking that feels unnatural, please use the GitHub Issue Forms in this repo.

@@ -28,6 +28,8 @@
     'did', 'have', 'has', 'had'
   ]);
   const NEGATIONS = new Set(['not', "n't", 'never']);
+  const SUBJECT_TAGS = new Set(['Noun', 'Pronoun', 'Person', 'Organization', 'Place']);
+  const VERB_TAGS = new Set(['Verb', 'Auxiliary', 'Copula', 'Participle']);
   const CLAUSE_STARTERS = new Set([
     'although', 'because', 'but', 'if', 'unless', 'when', 'where', 'whereas',
     'while', 'who', 'which', 'that', 'and', 'or', 'yet', 'so'
@@ -38,11 +40,26 @@
     'looks forward to', 'looked forward to', 'looking forward to',
     'on the other hand', 'such as', 'take into account', 'according to',
     'rather than', 'as a result', 'slow down', 'slows down', 'slowed down',
-    'slowing down'
+    'slowing down', 'less than half of', 'more than half of', 'at least half of',
+    'fewer than half of', 'less than', 'more than', 'at least',
+    'read out loud', 'reads out loud', 'reading out loud', 'read aloud',
+    'reads aloud', 'reading aloud'
   ];
 
   function normalizeText(text) {
     return String(text || '').replace(/\r\n?/g, '\n').trim().replace(/\s+/g, ' ');
+  }
+
+  function cleanupWebNoise(text) {
+    return String(text || '')
+      .replace(/\r\n?/g, '\n')
+      .replace(/\[\s*edit\s*\]/gi, ' ')
+      .replace(/(?:\s*\[\s*\d+[a-z]?\s*\])+/gi, ' ')
+      .replace(/\[\s*\]/g, ' ')
+      .replace(/(^|\s)(?:\[|\])(?=\s|$)/g, ' ')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\s+([,.;:!?])/g, '$1')
+      .trim();
   }
 
   function cleanToken(token) {
@@ -142,7 +159,25 @@
         (currentTags.has('Adjective') && nextTags.has('Noun')) ||
         (currentTags.has('Determiner') && (nextTags.has('Adjective') || nextTags.has('Noun'))) ||
         (currentTags.has('Auxiliary') && (nextTags.has('Verb') || nextTags.has('Participle'))) ||
-        (currentTags.has('Noun') && nextTags.has('Noun') && i > 0 && ARTICLES.has(cleanToken(tokens[i - 1])))
+        (
+          currentTags.has('Noun') &&
+          nextTags.has('Noun') &&
+          i > 0 &&
+          (
+            ARTICLES.has(cleanToken(tokens[i - 1])) ||
+            PREPOSITIONS.has(cleanToken(tokens[i - 1])) ||
+            (tags[i - 1] || new Set()).has('Adjective')
+          )
+        )
+      ) {
+        protectedBoundaries.add(i);
+      }
+
+      if (
+        Array.from(currentTags).some((tag) => SUBJECT_TAGS.has(tag)) &&
+        Array.from(nextTags).some((tag) => VERB_TAGS.has(tag)) &&
+        !currentTags.has('Date') &&
+        !currentTags.has('Duration')
       ) {
         protectedBoundaries.add(i);
       }
@@ -254,7 +289,8 @@
   }
 
   function segmentText(text, options = {}) {
-    const paragraphs = splitParagraphs(text);
+    const sourceText = options.cleanupNoise === 'web' ? cleanupWebNoise(text) : text;
+    const paragraphs = splitParagraphs(sourceText);
     const limits = getModeLimits(options);
     const chunks = [];
 
@@ -299,6 +335,7 @@
   return {
     segmentText,
     normalizeText,
+    cleanupWebNoise,
     reconstructNormalized,
     splitSentences,
     getModeLimits

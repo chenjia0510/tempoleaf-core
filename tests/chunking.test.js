@@ -63,6 +63,24 @@ test('does not end a chunk with an article or auxiliary', () => {
   }
 });
 
+test('keeps RSVP phrase guardrails readable', () => {
+  const chunks = chunksFor('In the late Middle Ages, less than half of adults will have finished a book, and adults read often.');
+  const boundaries = chunks.map((chunk) => chunk.text).join(' | ');
+  assert.doesNotMatch(boundaries, /In the late \| Middle Ages/);
+  assert.doesNotMatch(boundaries, /less than half \| of adults/);
+  assert.doesNotMatch(boundaries, /will have \| finished/);
+  assert.doesNotMatch(boundaries, /and \| adults read/);
+});
+
+test('keeps short subject and verb together when possible', () => {
+  const boundaries = chunksFor('Although on occasion a person reads out loud for other listeners.')
+    .map((chunk) => chunk.text)
+    .join(' | ');
+  assert.doesNotMatch(boundaries, /a person \| reads/);
+  assert.doesNotMatch(boundaries, /person \| reads/);
+  assert.doesNotMatch(boundaries, /reads \| out loud/);
+});
+
 test('respects the hard maximum in each mode', () => {
   const input = 'Reading meaningful phrases can help language learners process complex ideas with a smoother and more confident rhythm.';
   for (const mode of ['guided', 'practice', 'challenge']) {
@@ -77,4 +95,13 @@ test('handles CRLF, quotation marks, em dash, and citations', () => {
   const chunks = chunksFor(input);
   assert.equal(chunking.reconstructNormalized(chunks), chunking.normalizeText(input));
   assert.ok(chunks.every((chunk) => chunk.text.trim()));
+});
+
+test('cleans common web and Wikipedia noise when requested', () => {
+  const input = '[ edit ] Reading is generally [10] an individual activity, [ ] done silently. [[11]]';
+  const chunks = chunksFor(input, { cleanupNoise: 'web' });
+  const text = chunking.reconstructNormalized(chunks);
+  assert.equal(text, 'Reading is generally an individual activity, done silently.');
+  assert.doesNotMatch(text, /\[\s*(?:edit|\d+)?\s*\]/i);
+  assert.ok(chunks.every((chunk) => !/^\[|\]$/.test(chunk.text)));
 });
